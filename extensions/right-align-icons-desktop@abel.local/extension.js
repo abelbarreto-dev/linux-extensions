@@ -1,55 +1,64 @@
-const Main = imports.ui.main;
-const GLib = imports.gi.GLib;
-const Gio = imports.gi.Gio;
+// No Cinnamon 6.4+, usamos a sintaxe padrão de ESModules (import/export)
+import * as Main from "ui/main";
+import Gio from "gi://Gio";
+import Clutter from "gi://Clutter";
 
-let monitorValueChangeId = 0;
+// Em ESModules, variáveis declaradas no escopo do arquivo não poluem o global,
+// o que é muito mais limpo e seguro.
+let monitorsChangedId = 0;
 
-function init() {
-  // Inicialização da extensão (executada uma vez ao carregar)
-}
-
+/**
+ * Função principal que calcula a posição e manipula o layout
+ */
 function alignIconsToRight() {
-  // 1. Pegar a geometria do monitor principal
-  let monitor = global.display.get_primary_monitor();
-  let geometry = global.display.get_monitor_geometry(monitor);
-  let screenWidth = geometry.width;
+  try {
+    // Acesso ao display e monitor no Cinnamon moderno
+    let display = global.display;
+    let primaryMonitor = display.get_primary_monitor();
+    let geometry = display.get_monitor_geometry(primaryMonitor);
+    let screenWidth = geometry.width;
 
-  // Nota de desenvolvimento: O Cinnamon delega o desktop para o gerenciador 'Nemo'.
-  // Para mover os ícones via código puro JS no Cinnamon, nós podemos forçar o Nemo
-  // a reordenar ou ler as configurações via GSettings do Nemo Desktop.
+    console.log(
+      `[RightAlign] Alinhando ícones à direita. Largura da tela: ${screenWidth}px`,
+    );
 
-  // Uma abordagem comum em scripts/extensões quando o grid nativo resiste:
-  // Chamar via subprocesso o ajuste de posição ou alterar a chave de ordenação.
-  // Como o Nemo não tem a opção "alinhar à direita" nativa, nós monitoramos a pasta Desktop
-  // e calculamos a posição X ideal (ex: screenWidth - largura_do_icone - margem).
-
-  global.log(
-    "Alinhando ícones à direita. Largura da tela detectada: " + screenWidth,
-  );
-
-  // TODO: Capturar os atores filhos do desktop (Clutter.Actor) correspondentes aos ícones
-  // e setar actor.set_position(novo_x, atual_y);
+    // A lógica do Nemo para manipulação do grid entrará aqui
+  } catch (error) {
+    console.error(`[RightAlign] Erro ao alinhar ícones: ${error.message}`);
+  }
 }
 
-function enable() {
-  global.log("Extensão de Alinhamento à Direita Ativada");
+/**
+ * Classe obrigatória que o Cinnamon 6.4+ procura ao carregar a extensão.
+ * Ela precisa implementar os métodos enable() e disable().
+ */
+class RightAlignExtension {
+  enable() {
+    console.log("[RightAlign] Extensão ativada.");
 
-  // Executa o alinhamento inicial
-  alignIconsToRight();
-
-  // Monitora se a resolução da tela mudar para realinhar
-  monitorValueChangeId = global.display.connect("screen-size-changed", () => {
+    // Executa o alinhamento inicial
     alignIconsToRight();
-  });
-}
 
-function disable() {
-  global.log("Extensão de Alinhamento à Direita Desativada");
-
-  if (monitorValueChangeId > 0) {
-    global.display.disconnect(monitorValueChangeId);
-    monitorValueChangeId = 0;
+    // Conecta o sinal moderno de mudança de monitores
+    monitorsChangedId = global.display.connect("monitors-changed", () => {
+      alignIconsToRight();
+    });
   }
 
-  // Aqui você retornaria os ícones para a posição padrão (esquerda), se necessário.
+  disable() {
+    console.log("[RightAlign] Extensão desativada.");
+
+    if (monitorsChangedId > 0) {
+      global.display.disconnect(monitorsChangedId);
+      monitorsChangedId = 0;
+    }
+  }
+}
+
+/**
+ * O Cinnamon 6.4 espera que a função init() retorne uma instância
+ * da classe que gerencia o ciclo de vida da extensão.
+ */
+export function init() {
+  return new RightAlignExtension();
 }
