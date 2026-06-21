@@ -1,0 +1,7 @@
+{
+  "uuid": "macos-menu@abel.local",
+  "name": "Menu Estilo macOS",
+  "description": "Menu clássico da maçã com opções de sistema e desligamento.",
+  "icon": "apple-logo",
+  "max-instances": 1
+}

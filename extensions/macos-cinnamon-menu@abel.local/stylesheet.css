@@ -1,0 +1,27 @@
+* {
+    font-size: 17px;
+}
+
+.macos-global-menu-box {
+    padding: none;
+}
+
+.macos-global-menu-appname {
+    font-weight: bold;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.macos-global-menu-item {
+    padding: 0 8px;
+}
+
+.macos-global-menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+
+.macos-global-menu-item:active {
+    background-color: rgba(255, 255, 255, 0.28);
+    border-radius: 3px;
+}
