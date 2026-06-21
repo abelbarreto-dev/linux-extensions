@@ -117,7 +117,7 @@ MacOSMenuApplet.prototype = {
     let itemDesligar = new PopupMenu.PopupMenuItem(_("Desligar..."));
     itemDesligar.connect("activate", () => {
       // Correção aqui: Usamos o console nativo do Cinnamon para invocar o diálogo de desligamento de forma segura
-      Util.spawnCommandLine("systemctl poweroff");
+      Util.spawnCommandLine("cinnamon-session-quit --power-off");
     });
     this.menu.addMenuItem(itemDesligar);
   },
