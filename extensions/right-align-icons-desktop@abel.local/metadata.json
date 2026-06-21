@@ -1,0 +1,7 @@
+{
+  "uuid": "right-align-icons-desktop@abel.local",
+  "name": "Right Align Desktop Icons",
+  "description": "Alinha os ícones do desktop à direita por padrão, imitando o comportamento do macOS.",
+  "version": "1.0",
+  "cinnamon-version": ["5.0", "5.2", "5.6", "6.0", "6.4", "6.6"]
+}
