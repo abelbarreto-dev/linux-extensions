@@ -97,8 +97,7 @@ MacOSMenuApplet.prototype = {
     // 5. Encerrar Sessão
     let itemSair = new PopupMenu.PopupMenuItem(_("Encerrar Sessão..."));
     itemSair.connect("activate", () => {
-      // Usando a flag --no-delay para forçar a chamada imediata da janela de logout
-      Util.spawnCommandLine("cinnamon-session-quit --logout --no-delay");
+      Util.spawnCommandLine("cinnamon-session-quit --logout");
     });
     this.menu.addMenuItem(itemSair);
 
