@@ -3,22 +3,28 @@ const Clutter = imports.gi.Clutter;
 const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const Lang = imports.lang;
+const GLib = imports.gi.GLib;
+const Util = imports.misc.util;
 
 let globalMenu = null;
 let AppMenuRegistrar = null;
 let DBusMenuClient = null;
 
+GLib.get_home_dir();
+GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_WORK);
+GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP);
+GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOCUMENTS);
+GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOWNLOADS);
+GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_MUSIC);
+GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES);
+GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_VIDEOS);
+
 /**
  * Formata o WM_CLASS cru (ex: "gnome-terminal-server", "Gimp-2.10")
  * pro estilo "Title Case sem hífen" (ex: "Gnome Terminal Server", "Gimp 2.10").
- * 1) tudo pra minúsculo
- * 2) separa por hífen / underscore / espaço
- * 3) capitaliza cada palavra
- * 4) junta com espaço
  */
 function formatAppName(rawName) {
   if (!rawName) return "";
-
   return rawName
     .toLowerCase()
     .split(/[-_\s]+/)
@@ -35,12 +41,11 @@ class GlobalMenuBar {
     this._focusSignalId = 0;
     this._menuManager = null;
     this._rootNode = null;
-    this._items = []; // [{ id, button, menu, openStateId }]
-    this._openItem = null; // item atualmente com o menu aberto
+    this._items = [];
+    this._openItem = null;
 
-    // Container que vai no painel, à esquerda (como no macOS)
     this._box = new St.BoxLayout({ style_class: "macos-global-menu-box" });
-    this.actor = this._box; // PopupMenuManager espera um "owner" com .actor
+    this.actor = this._box;
     this._appNameLabel = new St.Label({
       style_class: "macos-global-menu-appname",
       text: "",
@@ -48,17 +53,10 @@ class GlobalMenuBar {
     this._box.add_child(this._appNameLabel);
   }
 
-  /**
-   * Tenta posicionar logo depois do applet de menu (Mint Menu / Whisker, etc.),
-   * imitando o lugar do menu Apple no macOS. Se não achar nenhum applet de menu
-   * na _leftBox, cai pra posição fixa 1 (logo após o primeiro item existente).
-   * Sempre faz clamp pro tamanho real da box, pra nunca estourar índice.
-   */
   _getInsertIndex() {
     const leftBox = Main.panel._leftBox;
     const children = leftBox.get_children();
     const FALLBACK_INDEX = 1;
-
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
       const applet = child._applet || child.applet;
@@ -66,13 +64,11 @@ class GlobalMenuBar {
         return Math.min(i + 1, children.length);
       }
     }
-
     return Math.min(FALLBACK_INDEX, children.length);
   }
 
   enable() {
     this._menuManager = new PopupMenu.PopupMenuManager(this);
-
     this._registrar = new AppMenuRegistrar(
       (windowId) => {
         if (windowId === this._focusWindowId) this._reloadForWindow(windowId);
@@ -81,16 +77,13 @@ class GlobalMenuBar {
         if (windowId === this._focusWindowId) this._clearMenu();
       },
     );
-
     Main.panel._leftBox.insert_child_at_index(
       this._box,
       this._getInsertIndex(),
     );
-
     this._focusSignalId = global.display.connect("notify::focus-window", () => {
       this._onFocusChanged();
     });
-
     this._onFocusChanged();
   }
 
@@ -137,7 +130,6 @@ class GlobalMenuBar {
     const appName = ["Nemo", "Nemo Desktop"].includes(wmClass)
       ? "Finder"
       : wmClass;
-
     this._appNameLabel.set_text(appName);
     this._focusWindowId = xid;
 
@@ -147,36 +139,334 @@ class GlobalMenuBar {
   _reloadForWindow(windowId) {
     if (!this._registrar) return;
     const entry = this._registrar.getMenuForWindowSync(windowId);
-    if (!entry) return; // app não exporta menu via dbusmenu
 
-    if (this._client) {
-      this._client.destroy();
-      this._client = null;
+    if (entry) {
+      // ✅ App exporta menu real via dbusmenu
+      if (this._client) {
+        this._client.destroy();
+        this._client = null;
+      }
+      this._rootNode = null;
+      this._client = new DBusMenuClient(
+        entry.busName,
+        entry.objectPath,
+        (rootNode) => {
+          this._onLayoutChanged(rootNode);
+        },
+      );
+    } else {
+      // ⬇️ Sem menu real — exibe barra genérica estilo macOS
+      this._showGenericMenu();
     }
-    this._rootNode = null;
-
-    this._client = new DBusMenuClient(
-      entry.busName,
-      entry.objectPath,
-      (rootNode) => {
-        this._onLayoutChanged(rootNode);
-      },
-    );
   }
 
   /**
-   * Chamado sempre que o app manda LayoutUpdated — seja na carga inicial,
-   * seja por causa do AboutToShow de um submenu que acabamos de abrir.
-   * IMPORTANTE: só reconstrói a barra inteira se a lista de itens de TOPO
-   * realmente mudou. Caso contrário, só atualiza o conteúdo do submenu que
-   * já está aberto (sem fechar/destruir nada) — é isso que elimina o lag
-   * e o bug do menu morrer assim que você clica nele.
+   * Monta uma barra genérica estilo macOS quando o app não exporta menu.
+   * Usa o mesmo _buildMenuButtons do fluxo normal, mas com nós fake
+   * (sem filhos) — os botões aparecem mas os submenus ficam vazios.
+   * Pode ser customizado por tipo de app no futuro.
    */
+  _showGenericMenu() {
+    const labels = ["File", "Edit", "View", "Go", "Window", "Help"];
+
+    const items = {
+      File: [
+        {
+          id: 1,
+          props: {
+            label: "New Finder",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () => Util.spawnCommandLine("nemo"),
+          },
+          children: [],
+        },
+        {
+          id: 2,
+          props: {
+            label: "New Terminal",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () => Util.spawnCommandLine("gnome-terminal"),
+          },
+          children: [],
+        },
+        {
+          id: 3,
+          props: {
+            label: "New File",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () => Util.spawnCommandLine("gedit"),
+          },
+          children: [],
+        },
+      ],
+      Edit: [
+        {
+          id: 1,
+          props: {
+            label: "Rename",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () => {},
+          },
+          children: [],
+        },
+        {
+          id: 2,
+          props: {
+            label: "Calculator",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () => Util.spawnCommandLine("gnome-calculator"),
+          },
+          children: [],
+        },
+      ],
+      View: [
+        {
+          id: 1,
+          props: {
+            label: "VS Code",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () => Util.spawnCommandLine("code"),
+          },
+          children: [],
+        },
+        {
+          id: 2,
+          props: {
+            label: "Sublime Merge",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () => Util.spawnCommandLine("smerge"),
+          },
+          children: [],
+        },
+        {
+          id: 3,
+          props: {
+            label: "Slack",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () => Util.spawnCommandLine("slack"),
+          },
+          children: [],
+        },
+        {
+          id: 4,
+          props: {
+            label: "Docker Desktop",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () =>
+              Util.spawnCommandLine(
+                "bash -c 'systemctl --user start docker-desktop'",
+              ),
+          },
+          children: [],
+        },
+        {
+          id: 5,
+          props: {
+            label: "System Monitor",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () => Util.spawnCommandLine("gnome-system-monitor"),
+            
+          },
+          children: [],
+        },
+      ],
+      Go: [
+        {
+          id: 1,
+          props: {
+            label: "Home",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () =>
+              Util.spawnCommandLine("nemo " + GLib.get_home_dir()),
+            
+          },
+          children: [],
+        },
+        {
+          id: 2,
+          props: {
+            label: "Work",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () =>
+              Util.spawnCommandLine("nemo " + GLib.get_home_dir() + "/Work"),
+            
+          },
+          children: [],
+        },
+        {
+          id: 3,
+          props: {
+            label: "Desktop",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () =>
+              Util.spawnCommandLine("nemo " + GLib.get_home_dir() + "/Desktop"),
+            
+          },
+          children: [],
+        },
+        {
+          id: 4,
+          props: {
+            label: "Documents",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () =>
+              Util.spawnCommandLine(
+                "nemo " + GLib.get_home_dir() + "/Documents",
+              ),
+            
+          },
+          children: [],
+        },
+        {
+          id: 5,
+          props: {
+            label: "Downloads",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () =>
+              Util.spawnCommandLine(
+                "nemo " + GLib.get_home_dir() + "/Downloads",
+              ),
+            
+          },
+          children: [],
+        },
+        {
+          id: 6,
+          props: {
+            label: "Music",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () =>
+              Util.spawnCommandLine("nemo " + GLib.get_home_dir() + "/Music"),
+            
+          },
+          children: [],
+        },
+        {
+          id: 7,
+          props: {
+            label: "Pictures",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () =>
+              Util.spawnCommandLine(
+                "nemo " + GLib.get_home_dir() + "/Pictures",
+              ),
+            
+          },
+          children: [],
+        },
+        {
+          id: 8,
+          props: {
+            label: "Videos",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () =>
+              Util.spawnCommandLine("nemo " + GLib.get_home_dir() + "/Videos"),
+          },
+          children: [],
+        },
+      ],
+      Window: [
+        {
+          id: 1,
+          props: {
+            label: "Minimize",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () => {},
+          },
+          children: [],
+        },
+        {
+          id: 2,
+          props: {
+            label: "Maximize",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () => {},
+          },
+          children: [],
+        },
+      ],
+      Help: [
+        {
+          id: 1,
+          props: {
+            label: "GitHub",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () =>
+              Util.spawnCommandLine(
+                "xdg-open https://github.com/abelbarreto-dev/linux-extensions",
+              ),
+          },
+          children: [],
+        },
+        {
+          id: 2,
+          props: {
+            label: "Debian",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () =>
+              Util.spawnCommandLine("xdg-open https://www.debian.org/"),
+          },
+          children: [],
+        },
+      ],
+    };
+
+    const fakeTopItems = labels.map((label, i) => ({
+      id: i,
+      props: { label, visible: true, type: null },
+      children: items[label],
+    }));
+    this._buildMenuButtons(fakeTopItems);
+  }
+
   _onLayoutChanged(rootNode) {
     const newTop = (rootNode.children || []).filter(
       (c) => c.props.type !== "separator" && c.props.visible !== false,
     );
-
     const unchanged =
       this._rootNode && this._sameTopLevel(this._rootNode, newTop);
     this._rootNode = rootNode;
@@ -201,9 +491,8 @@ class GlobalMenuBar {
       if (
         oldTop[i].id !== newTop[i].id ||
         oldTop[i].props.label !== newTop[i].props.label
-      ) {
+      )
         return false;
-      }
     }
     return true;
   }
@@ -254,13 +543,11 @@ class GlobalMenuBar {
       menu.actor.hide();
       this._menuManager.addMenu(menu);
 
-      const item = { id: child.id, button, menu };
+      const item = { id: child.id, button, menu, _node: child };
       this._populateSubmenu(menu, child);
 
       item.openStateId = menu.connect("open-state-changed", (m, isOpen) => {
-        if (!isOpen && this._openItem === item) {
-          this._openItem = null;
-        }
+        if (!isOpen && this._openItem === item) this._openItem = null;
         button.set_style_pseudo_class(isOpen ? "active" : "");
       });
 
@@ -275,18 +562,13 @@ class GlobalMenuBar {
   }
 
   _onTopButtonClicked(item) {
-    // Se outro menu tava aberto, fecha (estilo macOS: só um aberto por vez,
-    // e clicar em qualquer outro botão troca direto pro novo).
     if (this._openItem && this._openItem !== item) {
       this._openItem.menu.close();
     }
-
-    // Clicar de novo no mesmo botão fecha (toggle).
     if (item.menu.isOpen) {
       item.menu.close();
       return;
     }
-
     if (this._client) this._client.aboutToShow(item.id, () => {});
     item.menu.open(true);
     this._openItem = item;
@@ -307,17 +589,28 @@ class GlobalMenuBar {
       popupItem.setSensitive(enabled);
 
       popupItem.connect("activate", () => {
-        if (this._client) this._client.activate(child.id);
+        this._executeAction(child);
         menu.close();
       });
 
       menu.addMenuItem(popupItem);
     }
   }
+
+  _executeAction(child) {
+    if (this._client) {
+      this._client.activate(child.id);
+      return;
+    }
+
+    if (child.props._callback) {
+      child.props._callback();
+      return;
+    }
+  }
 }
 
 function init(metadata) {
-  // metadata.path é o diretório real da extensão, fornecido pelo Cinnamon.
   if (imports.searchPath.indexOf(metadata.path) === -1) {
     imports.searchPath.push(metadata.path);
   }
