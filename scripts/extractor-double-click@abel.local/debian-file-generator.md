@@ -128,13 +128,13 @@ chmod +x usr/local/bin/extractor-double-click
 Agora o passo mágico:
 
 ```bash
-dpkg-deb --build extractor-double-click
+dpkg-deb --build extractor-double-click-deb
 ```
 
 Resultado:
 
 ```bash
-extractor-double-click.deb
+extractor-double-click-deb.deb
 ```
 
 # 🚀 8. INSTALAR
