@@ -1,4 +1,19 @@
 # 📦 TUTORIAL: CRIAÇÃO DE PACOTE `.DEB`
+Um pequeno tutorial para auxiliar na criação de pacotes debian.
+
+# Sumário
+
+1. [Estrutura do Pacote](#-1-estrutura-do-pacote)
+2. [Arquivo Control Obrigatório](#-2-arquivo-control-obrigatório)
+3. [Script Postinst pós Instalação](#-3-script-postinst-pós-instalação)
+4. [Script Prerm antes de Remover](#-4-script-prerm-antes-de-remover)
+5. [Arquivo Desktop Opcional](#-5-arquivo-desktop-opcional)
+6. [Binário Script Principal](#-6-binário--script-principal)
+7. [Gerar o pacote DEB](#-7-gerar-o-pacote-deb)
+8. [Instalar o pacote](#-8-instalar-o-pacote)
+9. [Desinstalar](#-9-desinstalar)
+10. [Resumo conceitual](#-resumo-conceitual)
+11. [Observação importante](#-observação-importante)
 
 # 🏗️ 1. ESTRUTURA DO PACOTE
 
@@ -139,16 +154,17 @@ sudo dpkg -r package-name
 
 Um `.deb` é basicamente:
 
-* 📁 arquivos do sistema (usr/, etc)
-* ⚙️ scripts de ciclo de vida (DEBIAN/)
-* 📄 metadados (control)
+- 📁 arquivos do sistema (usr/, etc)
+- ⚙️ scripts de ciclo de vida (DEBIAN/)
+- 📄 metadados (control)
 
 # 🧠 OBSERVAÇÃO IMPORTANTE
 
-* `postinst` = instala/configura
-* `prerm` = remove/limpa
-* `control` = descrição do pacote
-* `usr/` = arquivos reais do sistema
+- `postinst` = instala/configura
+- `prerm` = remove/limpa
+- `control` = descrição do pacote
+- `usr/` = arquivos reais do sistema
 
 ---
+
 _That's All Folks_

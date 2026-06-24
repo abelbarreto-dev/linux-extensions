@@ -1,4 +1,19 @@
-# 🏗️ 1. CONSTRUINDO UM ARQUIVO DEBIAN para EXTRACTOR DOUBLE CLICK
+# CONSTRUINDO UM ARQUIVO DEBIAN para EXTRACTOR DOUBLE CLICK
+Essa documentação é focada nesse pacote de criação de um instalável `.deb` para o utilitário de extração de arquivos compactados.
+
+# Summary
+
+1. [Estrutura do Pacote](#-1-estrtutura-do-pacote)
+2. [Control (Essencial)](#-2-control-essencial)
+3. [Postinst Instalação Automática](#-3-postinst-instalação-automática)
+4. [Prerm Uninstall Limpo](#-4-prerm-uninstall-limpo)
+5. [Desktop File](#-5-desktop-file)
+6. [Script Principal](#-6-script-principal)
+7. [Gerar o DEB](#-7-gerar-o-deb)
+8. [Instalar](#-8-instalar)
+9. [Considerações](#-considerações)
+
+# 🏗️ 1. Estrtutura do Pacote
 
 Crie isso:
 
@@ -128,21 +143,20 @@ extractor-double-click.deb
 sudo dpkg -i extractor-double-click.deb
 ```
 
-# 🧠 O QUE VOCÊ GANHOU COM ISSO
+# 🧠 CONSIDERAÇÕES
 
 Agora seu projeto virou:
 
-### ✔ Sistema real Linux package
+**✔ Sistema real Linux package**
 
 - instala em `/usr/local/bin`
 - integra com MIME system
 - desktop entry oficial
 
-### ✔ comportamento profissional
+**✔ comportamento profissional**
 
 - install automático (postinst)
 - uninstall limpo (prerm)
 
 ---
-
 _That's All Folks!_

@@ -21,13 +21,16 @@ extensions/
 |---macos-cinnamon-menu@abel.local/
 screenshots/
 |---screenshot-<number_name>.png
+scripts/
+|---extractor-double-click@abel.local
 ```
 
 ## Description
-* applets/: Where I put the items like Menu.
-* docs/: The documents you can use to understant this project.
-* extensions/: System customizations.
-* screenshots/: The screenshots of project working.
+* `applets/:` Where I put the items like Menu.
+* `docs/:` The documents you can use to understant this project.
+* `extensions/:` System customizations.
+* `screenshots/:` The screenshots of project working.
+* `scripts/:` Useful scripts to implement to your system.
 
 ## How to Install
 **Steps for Applets:**
@@ -43,11 +46,20 @@ cp -r <extension_name>@abel.local ~/.local/share/cinnamon/extensions
 * Activate using your _Extension Manager_ software.
 * If you prefer, you can just using the key map: `Alt + F2` then type `r` and Enter.
 
+**Steps for Scripts:**
+Each script has its own documentation. I present a list containing the documentation and script folder.
+* `scripts/extractor-double-click@abel.local/`
+  * Documentation [here](./scripts/extractor-double-click@abel.local/README.md).
+
 ## Display
 Here is an example of what you can expect:
 
-![ScreenshotOne-VS-CodeView](/screenshots/screenshot-one.png)
+* Global Menu [here](/extensions/macos-cinnamon-menu@abel.local/).
 ![ScreenshotOne-Desktop-View](/screenshots/screenshot-two.png)
+![ScreenshotOne-VS-CodeView](/screenshots/screenshot-one.png)
+
+* Extractor Double Click [here](/scripts/extractor-double-click@abel.local/).
+![Extracting file with double click - one](/scripts/extractor-double-click@abel.local/screenshots/extractor-double-click@abel.local.one.gif)
 
 ## Notes
 * These work is not perfect, as well as you can find some issues. I'm working to make fixes.
