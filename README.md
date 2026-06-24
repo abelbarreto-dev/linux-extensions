@@ -47,6 +47,7 @@ cp -r <extension_name>@abel.local ~/.local/share/cinnamon/extensions
 Here is an example of what you can expect:
 
 ![ScreenshotOne-VS-CodeView](/screenshots/screenshot-one.png)
+![ScreenshotOne-Desktop-View](/screenshots/screenshot-two.png)
 
 ## Notes
 * These work is not perfect, as well as you can find some issues. I'm working to make fixes.
