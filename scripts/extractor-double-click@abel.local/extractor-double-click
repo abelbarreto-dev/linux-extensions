@@ -1,0 +1,29 @@
+#!/bin/bash
+
+FILE="$1"
+DIR="$(dirname "$FILE")"
+
+if [[ -z "$FILE" ]]; then
+    zenity --error --text="❌ Any file received!"
+    exit 1
+fi
+
+extract() {
+  case "$FILE" in
+    *.zip)              unzip -o "$FILE" -d "$DIR" ;;
+    *.tar.gz|*.tgz)     tar -xzf "$FILE" -C "$DIR" ;;
+    *.tar.xz)           tar -xJf "$FILE" -C "$DIR" ;;
+    *.tar.bz2|*.tbz2)   tar -xjf "$FILE" -C "$DIR" ;;
+    *.bz2)              bunzip2 -k "$FILE" ;;
+    *.tar)              tar -xf "$FILE" -C "$DIR" ;;
+    *.rar)              unrar x -o+ "$FILE" "$DIR/" ;;
+    *.7z|*.dmg|*.img|*.iso) 7z x "$FILE" -o"$DIR" ;;
+    *) echo "❌ Error => Unsupported format: $FILE" >&2; return 1 ;;
+  esac
+}
+
+if extract 2>/tmp/extract_err.log; then
+  notify-send "✅ Extraction Successfully!" "$FILE"
+else
+  zenity --error --text="❌ Extration Failed! $(cat /tmp/extract_err.log)"
+fi
