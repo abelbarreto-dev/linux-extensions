@@ -280,12 +280,22 @@ class GlobalMenuBar {
         {
           id: 5,
           props: {
+            label: "Obs Studio",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () => Util.spawnCommandLine("obs"),
+          },
+          children: [],
+        },
+        {
+          id: 6,
+          props: {
             label: "System Monitor",
             visible: true,
             enabled: true,
             type: null,
             _callback: () => Util.spawnCommandLine("gnome-system-monitor"),
-            
           },
           children: [],
         },
@@ -300,7 +310,6 @@ class GlobalMenuBar {
             type: null,
             _callback: () =>
               Util.spawnCommandLine("nemo " + GLib.get_home_dir()),
-            
           },
           children: [],
         },
@@ -313,7 +322,6 @@ class GlobalMenuBar {
             type: null,
             _callback: () =>
               Util.spawnCommandLine("nemo " + GLib.get_home_dir() + "/Work"),
-            
           },
           children: [],
         },
@@ -326,7 +334,6 @@ class GlobalMenuBar {
             type: null,
             _callback: () =>
               Util.spawnCommandLine("nemo " + GLib.get_home_dir() + "/Desktop"),
-            
           },
           children: [],
         },
@@ -341,7 +348,6 @@ class GlobalMenuBar {
               Util.spawnCommandLine(
                 "nemo " + GLib.get_home_dir() + "/Documents",
               ),
-            
           },
           children: [],
         },
@@ -356,7 +362,6 @@ class GlobalMenuBar {
               Util.spawnCommandLine(
                 "nemo " + GLib.get_home_dir() + "/Downloads",
               ),
-            
           },
           children: [],
         },
@@ -369,7 +374,6 @@ class GlobalMenuBar {
             type: null,
             _callback: () =>
               Util.spawnCommandLine("nemo " + GLib.get_home_dir() + "/Music"),
-            
           },
           children: [],
         },
@@ -384,7 +388,6 @@ class GlobalMenuBar {
               Util.spawnCommandLine(
                 "nemo " + GLib.get_home_dir() + "/Pictures",
               ),
-            
           },
           children: [],
         },
