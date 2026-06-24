@@ -17,14 +17,14 @@ let DBusMenuClient = null;
  * 4) junta com espaço
  */
 function formatAppName(rawName) {
-	if (!rawName) return '';
+  if (!rawName) return "";
 
-	return rawName
-			.toLowerCase()
-			.split(/[-_\s]+/)
-			.filter(word => word.length > 0)
-			.map(word => word.charAt(0).toUpperCase() + word.slice(1))
-			.join(' ');
+  return rawName
+    .toLowerCase()
+    .split(/[-_\s]+/)
+    .filter((word) => word.length > 0)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 class GlobalMenuBar {
@@ -131,8 +131,14 @@ class GlobalMenuBar {
       xid = 0;
     }
 
-    const wmClass = win.get_wm_class ? win.get_wm_class() || "" : "";
-    this._appNameLabel.set_text(formatAppName(wmClass));
+    const wmClass = formatAppName(
+      win.get_wm_class ? win.get_wm_class() || "" : "",
+    );
+    const appName = ["Nemo", "Nemo Desktop"].includes(wmClass)
+      ? "Finder"
+      : wmClass;
+
+    this._appNameLabel.set_text(appName);
     this._focusWindowId = xid;
 
     if (xid) this._reloadForWindow(xid);
