@@ -291,6 +291,18 @@ class GlobalMenuBar {
         {
           id: 6,
           props: {
+            label: "Postman",
+            visible: true,
+            enabled: true,
+            type: null,
+            _callback: () =>
+              Util.spawnCommandLine("./.local/share/Postman/Postman"),
+          },
+          children: [],
+        },
+        {
+          id: 7,
+          props: {
             label: "System Monitor",
             visible: true,
             enabled: true,
