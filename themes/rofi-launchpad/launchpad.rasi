@@ -1,0 +1,60 @@
+configuration {
+    modi: "drun";
+    show-icons: true;
+    drun-display-format: "{name}";
+}
+
+* {
+    background-color: transparent;
+    text-color: white;
+}
+
+window {
+    fullscreen: true;
+    background-color: #0b0b3acc;
+    padding: 6% 12%;
+}
+
+mainbox {
+    children: [ inputbar, listview ];
+    spacing: 50px;
+}
+
+inputbar {
+    children: [ entry ];
+    background-color: #ffffff22;
+    border-radius: 20px;
+    padding: 10px 16px;
+    margin: 0 30% 0 30%;
+}
+
+entry {
+    placeholder: "Search Applications";
+    placeholder-color: #ffffff99;
+}
+
+listview {
+    columns: 7;
+    lines: 4;
+    fixed-columns: true;
+    spacing: 30px;
+}
+
+element {
+    orientation: vertical;
+    padding: 14px;
+    border-radius: 18px;
+}
+
+element selected {
+    background-color: #ffffff2a;
+}
+
+element-icon {
+    size: 84px;
+    horizontal-align: 0.5;
+}
+
+element-text {
+    horizontal-align: 0.5;
+}
